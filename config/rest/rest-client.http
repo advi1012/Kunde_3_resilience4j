@@ -1,0 +1,356 @@
+# -----------------------------------------------------------------
+# C o n f i g   S e r v e r
+# -----------------------------------------------------------------
+
+### Konfigurationsdaten fuer das Profil "dev"
+https://{{config-host}}/kunde/dev
+Authorization: {{basic-auth-admin}}
+
+### REST-Schnittstelle vom Config-Server
+https://{{config-host}}/actuator
+Authorization: {{basic-auth-admin}}
+
+### Config-Server herunterfahren
+POST https://{{config-host}}/actuator/shutdown
+Authorization: {{basic-auth-admin}}
+
+# -----------------------------------------------------------------
+# R e g i s t r y   S e r v e r   (Beispiel 3)
+# -----------------------------------------------------------------
+
+### FIXME REST-Schnittstelle vom Registry-Server
+http://{{registry-host}}/actuator
+Authorization: {{basic-auth-admin}}
+
+### Registry-Server herunterfahren
+POST http://{{registry-host}}/actuator/shutdown
+Authorization: {{basic-auth-admin}}
+
+# -----------------------------------------------------------------
+# k u n d e
+# -----------------------------------------------------------------
+
+### Suche alle Kunden
+http://{{host}}
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+# ALPN: h2, http%2F1.1
+
+### Suche alle Kunden mit falschem Passwort: 401 (Unauthorized)
+http://{{host}}
+Authorization: {{basic-auth-admin-falsch}}
+ALPN: h2
+
+### Suche alle Kunden mit fehlenden Rechten: 403 (Forbidden)
+http://{{host}}
+Authorization: {{basic-auth-alpha1}}
+ALPN: h2
+
+### Suche mit vorhandener Kunde-ID
+http://{{host}}/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit ungueltiger Kunde-ID
+http://{{host}}/YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit nicht-vorhandener Kunde-ID
+http://{{host}}/99999999-9999-9999-9999-999999999999
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit falschem Passwort: 401 (Unauthorized)
+http://{{host}}/00000000-0000-0000-0000-000000000001
+Authorization: Basic {{basic-auth-admin-falsch}}
+ALPN: h2
+
+### Suche mit vorhandener Kunde-ID und ETag
+http://{{host}}/00000000-0000-0000-0000-000000000001
+If-None-Match: 0
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit vorhandenem Nachnamen
+http://{{host}}/?nachname=t
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit vorhandener Email
+http://{{host}}/?email=alpha%40hska.edu
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit nicht-vorhandener Email
+http://{{host}}/?email=theo%40test.edu
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit vorhandenem Nachnamen und Ort
+http://{{host}}/?nachname=a&ort=a
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche mit vorhandenem Nachnamen, Ort und PLZ
+http://{{host}}/?nachname=a&ort=a&plz=1
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche Version zu vorhandener ID
+http://{{host}}/version/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Streaming mit allen Kunden
+http://{{host}}
+Accept: text/event-stream
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Einen neuen Kunden anlegen
+POST http://{{host}}
+Content-Type: application/json
+ALPN: h2
+
+< kunde-neu.json
+
+### Einen neuen Kunden mit ungueltigen Daten versuchen anzulegen
+POST http://{{host}}
+Content-Type: application/json
+ALPN: h2
+
+< kunde-neu-invalid.json
+
+### Einen Kunden mittels PUT aktualisieren
+PUT http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+< kunde-1-put.json
+
+### Einen Kunden mittels PUT und ungueltigen Daten aktualisieren
+PUT http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+< kunde-1-put-invalid.json
+
+### Einen Kunden mittels PUT und falschem Passwort aktualisieren: 401 (Unauthorized)
+PUT http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-admin-falsch}}
+ALPN: h2
+
+< kunde-1-put.json
+
+### Zu einem vorhandenen Kunden ein Bild als Multipart hochladen
+PUT http://{{host}}/multimedia/00000000-0000-0000-0000-000000000001 HTTP/1.1
+Authorization: {{basic-auth-admin}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="image.png"; Content-Type="image/png"
+
+< ./image.png
+--boundary
+
+### Zu einem vorhandenen Kunden ein PNG-Bild hochladen
+PUT http://{{host}}/multimedia/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Content-Type: image/png
+
+< ./image.png
+
+### Zu einem vorhandenen Kunden ein JPEG-Bild hochladen
+PUT http://{{host}}/multimedia/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Content-Type: image/jpeg
+
+< ./image.jpg
+
+### Zu einem vorhandenen Kunden ein Bild (binaer!!!) herunterladen
+GET http://{{host}}/multimedia/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+Accept: image/*
+
+### Einen Kunden mittels PATCH aktualisieren
+PATCH http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/nachname", "value": "Neuername" },
+    { "op": "replace", "path": "/email", "value": "new.email@test.de" },
+    { "op": "add", "path": "/interessen", "value": "R" },
+    { "op": "remove", "path": "/interessen", "value": "L" }
+]
+
+### Einen Kunden mittels PATCH und ungueltigen Daten aktualisieren
+PATCH http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+[
+  { "op": "replace", "path": "/email", "value": "emailungueltig@" }
+]
+
+### Einen Kunden mittels PATCH und falschem Passwort aktualisieren: 401 (Unauthorized)
+PATCH http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-admin-falsch}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/nachname", "value": "Neuername" },
+    { "op": "replace", "path": "/email", "value": "new.email@test.de" },
+    { "op": "add", "path": "/interessen", "value": "R" },
+    { "op": "remove", "path": "/interessen", "value": "L" }
+]
+
+### Einen Kunden mittels PATCH und fehlenden Rechten aktualisieren: 403 (Forbidden)
+PATCH http://{{host}}/00000000-0000-0000-0000-000000000001
+If-Match: 0
+Content-Type: application/json
+Authorization: {{basic-auth-alpha1}}
+ALPN: h2
+
+[
+    { "op": "replace", "path": "/nachname", "value": "Neuername" },
+    { "op": "replace", "path": "/email", "value": "new.email@test.de" },
+    { "op": "add", "path": "/interessen", "value": "R" },
+    { "op": "remove", "path": "/interessen", "value": "L" }
+]
+
+### Löschen mit vorhandener Kunde-ID
+DELETE http://{{host}}/00000000-0000-0000-0000-000000000004
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Löschen mit vorhandener Kunde-ID und falschem Passwort: 401 (Unauthorized)
+DELETE http://{{host}}/00000000-0000-0000-0000-000000000004
+Authorization: {{basic-auth-admin-falsch}}
+ALPN: h2
+
+### Löschen mit vorhandener Kunde-ID und fehlenden Rechten: 403 (Forbidden)
+DELETE http://{{host}}/00000000-0000-0000-0000-000000000004
+Authorization: {{basic-auth-alpha1}}
+ALPN: h2
+
+### Löschen mit vorhandener Email
+DELETE http://{{host}}/?email=phi%40hska.cn
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+# -----------------------------------------------------------------
+# S p r i n g   B a t c h (SWE)
+# -----------------------------------------------------------------
+
+### Suche Anzahl Kunden
+http://{{host}}/anzahl
+Accept: text/plain
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+# -----------------------------------------------------------------
+# P r a e f i x e   u n d   V e r s i o n e n (SWE)
+# -----------------------------------------------------------------
+
+### Suche Nachnamen mit Praefix
+http://{{host}}/nachname/a
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche Emailadressen mit Praefix
+http://{{host}}/email/al
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Suche Version zu Kunde-ID
+http://{{host}}/version/00000000-0000-0000-0000-000000000001
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+### Alle Rollen ermitteln
+http://{{host}}/auth/rollen
+Authorization: {{basic-auth-admin}}
+ALPN: h2
+
+# -----------------------------------------------------------------
+# A c t u a t o r
+# -----------------------------------------------------------------
+
+### Uebersicht
+http://{{actuator}}
+Authorization: {{basic-auth-admin}}
+
+### Status (erfordert Client fuer MongoDB)
+http://{{actuator}}/info
+Authorization: {{basic-auth-admin}}
+
+### Features
+http://{{actuator}}/features
+Authorization: {{basic-auth-admin}}
+
+### Logger und Loglevel
+http://{{actuator}}/loggers
+Authorization: {{basic-auth-admin}}
+
+### Spring Beans
+http://{{actuator}}/beans
+Authorization: {{basic-auth-admin}}
+
+### Configuration Properties
+http://{{actuator}}/configprops
+Authorization: {{basic-auth-admin}}
+
+### Umgebung und Properties
+http://{{actuator}}/env
+Authorization: {{basic-auth-admin}}
+
+### Property server.port
+http://{{actuator}}/env/server.port
+Authorization: {{basic-auth-admin}}
+
+### Property server.ssl.protocol
+http://{{actuator}}/env/server.ssl.protocol
+Authorization: {{basic-auth-admin}}
+
+### Shutdown
+POST http://{{actuator}}/shutdown
+Authorization: {{basic-auth-admin}}
+Content-Type: application/json
+
+### Restart (nur Shutdown :-(
+POST http://{{actuator}}/restart
+Authorization: {{basic-auth-admin}}
+
+### Beispiel 3: Abfrage ueber den Status der Instanz beim Registry-Server (401 :-(
+http://{{host}}/service-registry/instance-status
+Authorization: {{basic-auth-admin}}
+
+###
+
+# -----------------------------------------------------------------
+# O P T I O N S, H E A D
+# -----------------------------------------------------------------
+
+#OPTIONS https://{{host}}
+#Authorization: {{basic-auth-admin}}
+#ALPN: h2
+
+###
+
+#HEAD https://{{host}}
+#Authorization: {{basic-auth-admin}}
+#ALPN: h2
